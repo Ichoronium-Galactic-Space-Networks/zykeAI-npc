@@ -12,7 +12,7 @@ __pycache__/
 # Data artifacts (keep scripts, ignore payloads)
 data/raw/
 data/processed/
-data_lib/wikipedia-downloader/output/
+data/lib/wikipedia-downloader/output/
 
 # Training outputs
 results/
