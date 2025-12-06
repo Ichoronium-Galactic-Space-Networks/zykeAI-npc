@@ -1,0 +1,34 @@
+# GPT Training Project
+
+This repository contains scripts to finetune GPT-2–class models with Hugging Face Transformers and deploy them behind simple services.
+
+## Project Structure
+
+- `configs/` — YAML for training/eval hyperparameters.
+- `data/` — data prep scripts; `raw/` and `processed/` are gitignored; `lib/` holds dataset utilities (e.g., Wikipedia downloader).
+- `scripts/` — runnable entrypoints (`train.py`, `evaluate.py`, `distributed_train.py`, `hyperparameter_tuning.py`, `train_json.py`).
+- `src/` — importable code:
+  - `models/` (base model/tokenizer loading)
+  - `inference/` (generation helpers)
+  - `cc/` (command-and-control server)
+  - `node/` (worker client)
+  - `utils/` (config helpers)
+- `deployment/` — Dockerfile and app server code.
+- `examples/` — educational transformer implementation.
+- `openweb/` — Open WebUI + Ollama compose.
+- `results/`, `models/`, `logs/` — training artifacts (gitignored).
+
+## Quickstart
+
+1. Install deps: `pip install -r requirements.txt`
+2. Prepare data (example): `python data/prepare_data.py`
+3. Train: `python scripts/train.py` (adjust paths inside as needed; expects `data/raw/wikipedia-en-0.json`)
+4. Evaluate perplexity: `python scripts/evaluate.py`
+5. Run inference helper: `python src/inference/generator.py`
+
+Set `PYTHONPATH=.` if you import from `src/` in your own scripts.
+
+## Notes
+
+- Large datasets, checkpoints, and logs are gitignored; use external storage for big artifacts.
+- Deployment example is a simple Flask script; adapt to FastAPI or your stack as needed.

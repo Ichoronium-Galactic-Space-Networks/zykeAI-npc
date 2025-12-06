@@ -1,0 +1,29 @@
+# Bytecode / caches
+__pycache__/
+*.py[cod]
+*.so
+.DS_Store
+.venv/
+.env
+.envrc
+.idea/
+.vscode/
+
+# Data artifacts (keep scripts, ignore payloads)
+data/raw/
+data/processed/
+data_lib/wikipedia-downloader/output/
+
+# Training outputs
+results/
+models/
+logs/
+*.ckpt
+
+# Docker/volumes
+openweb/ollama
+openweb/open-webui
+
+# Hugging Face caches
+.cache/
+.cache/huggingface/
