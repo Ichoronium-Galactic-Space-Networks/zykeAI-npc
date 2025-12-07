@@ -5,3 +5,5 @@ datasets
 pytest
 accelerate
 peft
+bitsandbytes
+sentencepiece

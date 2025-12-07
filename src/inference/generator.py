@@ -2,7 +2,7 @@ import json
 from typing import Dict, List, Optional
 
 import torch
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from src.models.adapter import load_model_with_adapter
 
@@ -97,8 +97,8 @@ def parse_npc_output(raw_text: str) -> Dict[str, str]:
 
 
 def generate_text(model_path, tokenizer_path, prompt, max_length=100):
-    model = GPT2LMHeadModel.from_pretrained(model_path)
-    tokenizer = GPT2Tokenizer.from_pretrained(tokenizer_path)
+    model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, trust_remote_code=True)
 
     inputs = tokenizer.encode(prompt, return_tensors="pt")
     outputs = model.generate(inputs, max_length=max_length, num_return_sequences=1)
@@ -107,7 +107,7 @@ def generate_text(model_path, tokenizer_path, prompt, max_length=100):
     return text
 
 
-def _bad_words_ids(tokenizer: GPT2Tokenizer, words: List[str]) -> List[List[int]]:
+def _bad_words_ids(tokenizer: AutoTokenizer, words: List[str]) -> List[List[int]]:
     ids = []
     for w in words:
         toks = tokenizer(w, add_special_tokens=False).input_ids

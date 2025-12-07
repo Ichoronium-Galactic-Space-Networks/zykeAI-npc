@@ -21,6 +21,7 @@ results/
 results
 models/
 models
+!src/models/
 logs/
 logs
 *.ckpt

@@ -1,11 +1,12 @@
 import argparse
+import os
 from pathlib import Path
 
 import torch
 from datasets import load_dataset
 from transformers import (
-    GPT2LMHeadModel,
-    GPT2Tokenizer,
+    AutoModelForCausalLM,
+    AutoTokenizer,
     Trainer,
     TrainingArguments,
     DataCollatorForLanguageModeling,
@@ -34,7 +35,12 @@ def latest_checkpoint(output_dir: Path) -> str | None:
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Train GPT-2 on local data.")
+    parser = argparse.ArgumentParser(description="Train a causal LM on local data.")
+    parser.add_argument(
+        "--model-name",
+        default="meta-llama/Llama-2-13b-hf",
+        help="Base model name or path.",
+    )
     parser.add_argument(
         "--data-file",
         default="data/raw/wikipedia-en-0.json",
@@ -95,7 +101,7 @@ def parse_args():
     )
     parser.add_argument(
         "--lora-target-modules",
-        default="c_attn,c_proj",
+        default="q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj",
         help="Comma-separated target modules for LoRA.",
     )
     return parser.parse_args()
@@ -104,13 +110,18 @@ def parse_args():
 def train():
     args = parse_args()
 
-    model_name = "gpt2"
-    tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+    model_name = args.model_name
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_name, use_fast=True, trust_remote_code=True
+    )
 
     # Use EOS as padding to avoid padding errors and expand embeddings to include it
-    tokenizer.pad_token = tokenizer.eos_token
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
 
-    model = GPT2LMHeadModel.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name, trust_remote_code=True, torch_dtype=torch.float16 if torch.cuda.is_available() else None
+    )
     model.resize_token_embeddings(len(tokenizer))
     model.config.pad_token_id = tokenizer.pad_token_id
 
@@ -138,7 +149,7 @@ def train():
         return tokenizer(
             examples["text"],
             truncation=True,
-            max_length=256,
+            max_length=1024,
         )
 
     tokenized_datasets = split_datasets.map(

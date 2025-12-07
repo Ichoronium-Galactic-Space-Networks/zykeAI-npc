@@ -6,8 +6,8 @@ from typing import Iterable, List
 import torch
 from datasets import load_dataset
 from transformers import (
-    GPT2LMHeadModel,
-    GPT2Tokenizer,
+    AutoModelForCausalLM,
+    AutoTokenizer,
     DataCollatorForLanguageModeling,
     Trainer,
     TrainingArguments,
@@ -34,7 +34,7 @@ REGRESSION_PROMPTS = [
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Evaluate a GPT-2 checkpoint.")
+    parser = argparse.ArgumentParser(description="Evaluate a causal LM checkpoint.")
     parser.add_argument(
         "--model-path",
         default="models/latest",
@@ -52,7 +52,7 @@ def parse_args():
     )
     parser.add_argument(
         "--base-model",
-        default="gpt2",
+        default="meta-llama/Llama-2-13b-hf",
         help="Base model name/path to load when applying an adapter.",
     )
     parser.add_argument(
@@ -86,7 +86,7 @@ def compute_perplexity(model, tokenizer, dataset_name: str, config: str, split: 
         return tokenizer(
             examples["text"],
             truncation=True,
-            max_length=256,
+            max_length=1024,
         )
 
     tokenized_dataset = dataset.map(
@@ -191,18 +191,19 @@ def run_regression_prompts(model, tokenizer, device):
 def main():
     args = parse_args()
 
-    tokenizer = GPT2Tokenizer.from_pretrained(args.tokenizer_path)
-    tokenizer.pad_token = tokenizer.eos_token
+    tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_path, use_fast=True, trust_remote_code=True)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
 
     if args.adapter_path:
         try:
             from peft import PeftModel
         except ImportError as exc:
             raise ImportError("peft is required to load adapters") from exc
-        base_model = GPT2LMHeadModel.from_pretrained(args.base_model)
+        base_model = AutoModelForCausalLM.from_pretrained(args.base_model, trust_remote_code=True)
         model = PeftModel.from_pretrained(base_model, args.adapter_path)
     else:
-        model = GPT2LMHeadModel.from_pretrained(args.model_path)
+        model = AutoModelForCausalLM.from_pretrained(args.model_path, trust_remote_code=True)
 
     model.resize_token_embeddings(len(tokenizer))
     model.config.pad_token_id = tokenizer.pad_token_id
